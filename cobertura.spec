@@ -1,57 +1,52 @@
-%define gcj_support 1
-%define build_tests 0
-%define name	cobertura
-%define version	1.8
-%define release	2
-%define section	free
+%define section         free
+%define gcj_support     1
+%define build_tests     0
 
-Summary:	Free Java tool that calculates the percentage of code accessed by tests
-Name:		%{name}
-Version:	%{version}
-Release:	%mkrel %{release}
-Epoch:		0
-Group:		Development/Java
-License:	GPL
-URL:		http://cobertura.sourceforge.net/
-Source0:	http://download.sourceforge.net/cobertura/cobertura-%{version}-src.tar.bz2
-Patch0:		%{name}-test.patch.bz2
+Name:           cobertura
+Version:        1.9
+Release:        %mkrel 1
+Epoch:          0
+Summary:        Free Java tool that calculates the percentage of code accessed by tests
+Group:          Development/Java
+License:        GPL
+URL:            http://cobertura.sourceforge.net/
+Source0:        http://download.sourceforge.net/cobertura/cobertura-%{version}-src.tar.bz2
+Patch0:         %{name}-javadoc.patch
 %if %{gcj_support}
-Requires(post):	java-gcj-compat
+Requires(post): java-gcj-compat
 Requires(postun): java-gcj-compat
-BuildRequires:	java-gcj-compat-devel
+BuildRequires:  java-gcj-compat-devel
 %else
-BuildArch:	noarch
+BuildArch:      noarch
 %endif
-Requires:	ant >= 0:1.6
-Requires:	ant-junit
-Requires:	ant-nodeps
-Requires:	asm2
-Requires:	jpackage-utils >= 0:1.5.32
-Requires:	junit
-Requires:	log4j
-Requires:	oro
-Requires:	xerces-j2
-BuildRequires:	ant >= 0:1.6
-BuildRequires:	ant-junit
-BuildRequires:	ant-nodeps
-BuildRequires:	asm2
-BuildRequires:	java-devel >= 0:1.4.2
-BuildRequires:	jpackage-utils >= 0:1.5.32
-BuildRequires:	junit
-BuildRequires:	log4j
-BuildRequires:	oro
-BuildRequires:	xalan-j2
-BuildRequires:	xerces-j2
-#Vendor:		JPackage Project
-#Distribution:	JPackage
-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
+Requires:       ant >= 0:1.6
+Requires:       ant-junit
+Requires:       ant-nodeps
+Requires:       asm2
+Requires:       jpackage-utils >= 0:1.5.32
+Requires:       junit
+Requires:       log4j
+Requires:       oro
+Requires:       xerces-j2
+BuildRequires:  ant >= 0:1.6
+BuildRequires:  ant-junit
+BuildRequires:  ant-nodeps
+BuildRequires:  asm2
+BuildRequires:  java-devel >= 0:1.4.2
+BuildRequires:  jpackage-utils >= 0:1.5.32
+BuildRequires:  junit
+BuildRequires:  log4j
+BuildRequires:  oro
+BuildRequires:  xalan-j2
+BuildRequires:  xerces-j2
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
 Cobertura is a free Java tool that calculates the percentage of code 
 accessed by tests. It can be used to identify which parts of your 
 Java program are lacking test coverage. It is based on jcoverage.
 
-Features
+Features:
 
     * Can be executed from ant or from the command line.
     * Instruments Java bytecode after it has been compiled.
@@ -76,25 +71,23 @@ NOTE: This version does NOT contain the cyclomatic code complexity
       code because the javancss dependency cannot currently be rebuilt
       from source.
 
-%package	javadoc
-Summary:	Javadoc for %{name}
-Group:		Development/Java
+%package javadoc
+Summary:        Javadoc for %{name}
+Group:          Development/Java
 
-%description	javadoc
+%description javadoc
 Javadoc for %{name}.
 
 %prep
 %setup -q
-%if !%{build_tests}
 %patch0 -p1
-%endif
 %{__perl} -pi -e 's/1000000/99999/' test/net/sourceforge/cobertura/util/IOUtilTest.java
-find . -name '*.jar' -exec %{__rm} -f '{}' ';'
+%{_bindir}/find . -name '*.jar' | %{_bindir}/xargs -t %{__rm}
 
 %build
-export CLASSPATH=$(build-classpath ant asm2/asm2 junit log4j oro xalan-j2 xerces-j2)
+export CLASSPATH=$(build-classpath ant asm2/asm2 asm2/asm2-tree junit log4j oro xalan-j2 xerces-j2)
 export OPT_JAR_LIST="junit ant/ant-junit ant/ant-nodeps"
-%ant -Dbuild.sysclasspath=last compile \
+%{ant} -Dbuild.sysclasspath=last compile \
 %if %{build_tests}
 test \
 %endif
@@ -137,15 +130,6 @@ EOF
 %{clean_gcjdb}
 %endif
 
-%post javadoc
-%{__rm} -f %{_javadocdir}/%{name}
-%{__ln_s} %{name}-%{version} %{_javadocdir}/%{name}
-
-%postun javadoc
-if [ $1 -eq 0 ]; then
-  %{__rm} -f %{_javadocdir}/%{name}
-fi
-
 %files
 %defattr(0644,root,root,0755)
 %doc ChangeLog COPYING COPYRIGHT README examples
@@ -160,4 +144,4 @@ fi
 %defattr(0644,root,root,0755)
 %dir %{_javadocdir}/%{name}-%{version}
 %{_javadocdir}/%{name}-%{version}/*
-%ghost %dir %{_javadocdir}/%{name}
+%dir %{_javadocdir}/%{name}
