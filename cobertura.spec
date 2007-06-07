@@ -4,7 +4,7 @@
 
 Name:           cobertura
 Version:        1.9
-Release:        %mkrel 1
+Release:        %mkrel 2
 Epoch:          0
 Summary:        Free Java tool that calculates the percentage of code accessed by tests
 Group:          Development/Java
