@@ -4,7 +4,7 @@
 
 Name:           cobertura
 Version:        1.9
-Release:        %mkrel 4
+Release:        %mkrel 5
 Epoch:          0
 Summary:        Free Java tool that calculates the percentage of code accessed by tests
 Group:          Development/Java
@@ -13,8 +13,6 @@ URL:            http://cobertura.sourceforge.net/
 Source0:        http://download.sourceforge.net/cobertura/cobertura-%{version}-src.tar.bz2
 Patch0:         %{name}-javadoc.patch
 %if %{gcj_support}
-Requires(post): java-gcj-compat
-Requires(postun): java-gcj-compat
 BuildRequires:  java-gcj-compat-devel
 %else
 BuildArch:      noarch
