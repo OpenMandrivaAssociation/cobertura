@@ -4,7 +4,7 @@
 
 Name:           cobertura
 Version:        1.9
-Release:        %mkrel 5
+Release:        %mkrel 6
 Epoch:          0
 Summary:        Free Java tool that calculates the percentage of code accessed by tests
 Group:          Development/Java
@@ -102,7 +102,7 @@ jar javadoc
 
 %{__mkdir_p} %{buildroot}%{_sysconfdir}/ant.d
 %{__cat} > %{buildroot}%{_sysconfdir}/ant.d/%{name} << EOF
-ant cobertura junit log4j oro xerces-j2
+ant asm2 cobertura junit log4j oro xerces-j2
 EOF
 
 # javadoc
