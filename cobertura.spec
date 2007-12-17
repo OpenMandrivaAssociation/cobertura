@@ -37,7 +37,6 @@ BuildRequires:  log4j
 BuildRequires:  oro
 BuildRequires:  xalan-j2
 BuildRequires:  xerces-j2
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
 Cobertura is a free Java tool that calculates the percentage of code 
