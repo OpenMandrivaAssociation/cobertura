@@ -1,10 +1,10 @@
 %define section         free
-%define gcj_support     1
+%define gcj_support     0
 %define build_tests     0
 
 Name:           cobertura
 Version:        1.9
-Release:        %mkrel 10
+Release:        %mkrel 11
 Epoch:          0
 Summary:        Free Java tool that calculates the percentage of code accessed by tests
 Group:          Development/Java
@@ -25,18 +25,16 @@ Requires:       jpackage-utils >= 0:1.5.32
 Requires:       junit
 Requires:       log4j
 Requires:       oro
-Requires:       xerces-j2
+Requires:       java >= 0:1.6
 BuildRequires:  ant >= 0:1.6
 BuildRequires:  ant-junit
 BuildRequires:  ant-nodeps
 BuildRequires:  asm2
-BuildRequires:  java-devel >= 0:1.4.2
+BuildRequires:  java-devel >= 0:1.6
 BuildRequires:  java-rpmbuild >= 0:1.5.32
 BuildRequires:  junit
 BuildRequires:  log4j
 BuildRequires:  oro
-BuildRequires:  xalan-j2
-BuildRequires:  xerces-j2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
