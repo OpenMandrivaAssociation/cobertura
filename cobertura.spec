@@ -1,143 +1,138 @@
-%define section         free
-%define gcj_support     0
-%define build_tests     0
+# Prevent brp-java-repack-jars from being run
+%global __jar_repack %{nil}
 
 Name:           cobertura
-Version:        1.9
-Release:        %mkrel 11
-Epoch:          0
-Summary:        Free Java tool that calculates the percentage of code accessed by tests
+Version:        1.9.3
+Release:        3
+Summary:        Java tool that calculates the percentage of code accessed by tests
+
 Group:          Development/Java
-License:        GPL
+License:        ASL 1.1 and GPLv2+
 URL:            http://cobertura.sourceforge.net/
-Source0:        http://download.sourceforge.net/cobertura/cobertura-%{version}-src.tar.bz2
-Patch0:         %{name}-javadoc.patch
-%if %{gcj_support}
-BuildRequires:  java-gcj-compat-devel
-%else
-BuildArch:      noarch
-%endif
-Requires:       ant >= 0:1.6
-Requires:       ant-junit
-Requires:       ant-nodeps
-Requires:       asm2
-Requires:       jpackage-utils >= 0:1.5.32
-Requires:       junit
-Requires:       log4j
-Requires:       oro
-Requires:       java >= 0:1.6
-BuildRequires:  ant >= 0:1.6
+
+Source0:        http://prdownloads.sourceforge.net/cobertura/cobertura-1.9.3-src.tar.gz
+Source1:        %{name}-%{version}.pom
+Source2:        %{name}-runtime-%{version}.pom
+
+BuildRequires:  ant
 BuildRequires:  ant-junit
-BuildRequires:  ant-nodeps
-BuildRequires:  asm2
-BuildRequires:  java-devel >= 0:1.6
-BuildRequires:  java-rpmbuild >= 0:1.5.32
-BuildRequires:  junit
+BuildRequires:  ant-trax
+BuildRequires:  antlr
+BuildRequires:  dos2unix
+BuildRequires:  groovy
+BuildRequires:  jpackage-utils
+BuildRequires:  java-devel >= 0:1.6.0
+BuildRequires:  jakarta-oro
+BuildRequires:  jaxen
+BuildRequires:  jdom
+BuildRequires:  junit4
 BuildRequires:  log4j
-BuildRequires:  oro
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
+BuildRequires:  objectweb-asm
+BuildRequires:  tomcat6-servlet-2.5-api
+BuildRequires:  xalan-j2
+BuildRequires:  xerces-j2
+BuildRequires:  xml-commons-jaxp-1.3-apis
+BuildRequires:  jakarta-commons-cli
+
+Requires:       ant
+Requires:       jpackage-utils
+Requires:       java >= 0:1.6.0
+Requires:       jakarta-oro
+Requires:       junit4
+Requires:       log4j
+Requires:       objectweb-asm >= 0:3.0
+
+Requires(post): jpackage-utils
+Requires(postun): jpackage-utils
+
+BuildArch:      noarch
 
 %description
-Cobertura is a free Java tool that calculates the percentage of code 
-accessed by tests. It can be used to identify which parts of your 
-Java program are lacking test coverage. It is based on jcoverage.
+Cobertura is a free Java tool that calculates the percentage of code
+accessed by tests. It can be used to identify which parts of your
+Java program are lacking test coverage.
 
-Features:
-
-    * Can be executed from ant or from the command line.
-    * Instruments Java bytecode after it has been compiled.
-    * Can generate reports in HTML or XML.
-    * Shows percent of lines coveraged and branches coveraged for each
-      class, package, and for the overall project.
-    * Shows the McCabe cyclomatic code complexity of each class, and
-      the average cyclomatic code complexity for each package, and for
-      the overall product.
-    * Can sort HTML results by class name, percent of lines covered,
-      percent of branches covered, etc. And can sort in ascending or
-      decending order.
-
-NOTE: Due to asm version conflicts, if you use Cobertura as an ant
-      task you MUST add manually a classpath element 
-
-        <classpath location="/usr/share/java/asm2/asm2.jar"/>
-
-      to all Cobertura tasks requiring bytecode manipulation.
-
-NOTE: This version does NOT contain the cyclomatic code complexity 
-      code because the javancss dependency cannot currently be rebuilt
-      from source.
-
-%package javadoc
+%package        javadoc
 Summary:        Javadoc for %{name}
 Group:          Development/Java
+Requires:       %{name} = %{version}-%{release}
+Requires:       jpackage-utils
 
-%description javadoc
-Javadoc for %{name}.
+%description    javadoc
+This package contains the API documentation for %{name}.
 
 %prep
 %setup -q
-%patch0 -p1
-%{__perl} -pi -e 's/1000000/99999/' test/net/sourceforge/cobertura/util/IOUtilTest.java
-%{_bindir}/find . -name '*.jar' | %{_bindir}/xargs -t %{__rm}
+find . -type f -name '*.jar' -delete
+
+sed -i 's/\r//' ChangeLog COPYING COPYRIGHT README
+
+# fix asm depdency to correct groupId
+sed -i 's/org.objectweb.asm/asm/g' %{SOURCE1} %{SOURCE2}
 
 %build
-export CLASSPATH=$(build-classpath ant asm2/asm2 asm2/asm2-tree junit log4j oro xalan-j2 xerces-j2)
-export OPT_JAR_LIST="junit ant/ant-junit ant/ant-nodeps"
-%{ant} -Dbuild.sysclasspath=last compile \
-%if %{build_tests}
-test \
-%endif
-jar javadoc
+pushd lib
+  %__ln_s $(build-classpath jaxen) .
+  %__ln_s $(build-classpath jdom) .
+  %__ln_s $(build-classpath junit4) .
+  %__ln_s $(build-classpath log4j) .
+  %__ln_s $(build-classpath objectweb-asm/asm-all) .
+  %__ln_s $(build-classpath oro) .
+  %__ln_s $(build-classpath xalan-j2) .
+  %__ln_s $(build-classpath tomcat6-servlet-2.5-api) servlet-api.jar
+  %__ln_s $(build-classpath apache-commons-cli) commons-cli.jar
+  pushd xerces
+    %__ln_s $(build-classpath xalan-j2) .
+    %__ln_s $(build-classpath xml-commons-jaxp-1.3-apis) .
+  popd
+popd
+
+pushd antLibrary/common
+  %__ln_s $(build-classpath groovy) .
+popd
+
+export CLASSPATH=$(build-classpath objectweb-asm/asm-all commons-cli antlr junit4)
+%ant -Djetty.dir=. -Dlib.dir=. compile test jar javadoc
 
 %install
-%{__rm} -rf %{buildroot}
-
 # jar
-%{__mkdir_p} %{buildroot}%{_javadir}
-%{__cp} -a %{name}.jar %{buildroot}%{_javadir}/%{name}-%{version}.jar
-(cd %{buildroot}%{_javadir} && for jar in *-%{version}*; do \
-%{__ln_s} ${jar} ${jar/-%{version}/}; done)
+%__mkdir_p %{buildroot}%{_javadir}
+%__cp -a %{name}.jar %{buildroot}%{_javadir}/%{name}.jar
 
-%{__mkdir_p} %{buildroot}%{_sysconfdir}/ant.d
-%{__cat} > %{buildroot}%{_sysconfdir}/ant.d/%{name} << EOF
-ant asm2 cobertura junit log4j oro xerces-j2
+%add_to_maven_depmap cobertura cobertura %{version} JPP %{name}
+%add_to_maven_depmap cobertura cobertura-runtime %{version} JPP %{name}
+%add_to_maven_depmap net.sourceforge.cobertura cobertura %{version} JPP %{name}
+%add_to_maven_depmap net.sourceforge.cobertura cobertura-runtime %{version} JPP %{name}
+
+# pom
+%__mkdir_p %{buildroot}%{_mavenpomdir}
+%__cp -a %{SOURCE1} %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
+%__cp -a %{SOURCE2} %{buildroot}%{_mavenpomdir}/JPP-%{name}-runtime.pom
+
+%__mkdir_p  %{buildroot}%{_sysconfdir}/ant.d
+%__cat > %{buildroot}%{_sysconfdir}/ant.d/%{name} << EOF
+ant cobertura junit4 log4j oro xerces-j2
 EOF
 
 # javadoc
-%{__mkdir_p} %{buildroot}%{_javadocdir}/%{name}-%{version}
-%{__cp} -a build/api/* %{buildroot}%{_javadocdir}/%{name}-%{version}
-(cd %{buildroot}%{_javadocdir} && %{__ln_s} %{name}-%{version} %{name})
+%__mkdir_p %{buildroot}%{_javadocdir}/%{name}
+%__cp -a build/api/* %{buildroot}%{_javadocdir}/%{name}
 
-%{__perl} -pi -e 's/\r$//g;' ChangeLog COPYING COPYRIGHT README
-/bin/find examples -type f -exec %{__perl} -pi -e 's/\r$//g;' {} \;
-
-%if %{gcj_support}
-%{_bindir}/aot-compile-rpm
-%endif
-
-%clean
-%{__rm} -rf %{buildroot}
-
-%if %{gcj_support}
 %post
-%{update_gcjdb}
+%update_maven_depmap
 
 %postun
-%{clean_gcjdb}
-%endif
+%update_maven_depmap
 
 %files
-%defattr(0644,root,root,0755)
-%doc ChangeLog COPYING COPYRIGHT README examples
+%defattr(-,root,root,-)
+%doc ChangeLog COPYING COPYRIGHT README
 %{_javadir}/*.jar
-%if %{gcj_support}
-%dir %{_libdir}/gcj/%{name}
-%attr(-,root,root) %{_libdir}/gcj/%{name}/*.jar.*
-%endif
 %config(noreplace) %{_sysconfdir}/ant.d/%{name}
+%{_mavenpomdir}/JPP-%{name}*.pom
+%config(noreplace) %{_mavendepmapfragdir}
 
 %files javadoc
-%defattr(0644,root,root,0755)
-%dir %{_javadocdir}/%{name}-%{version}
-%{_javadocdir}/%{name}-%{version}/*
-%dir %{_javadocdir}/%{name}
+%defattr(-,root,root,-)
+%doc %{_javadocdir}/%{name}
+
