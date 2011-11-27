@@ -3,7 +3,7 @@
 
 Name:           cobertura
 Version:        1.9.3
-Release:        3
+Release:        5
 Summary:        Java tool that calculates the percentage of code accessed by tests
 
 Group:          Development/Java
