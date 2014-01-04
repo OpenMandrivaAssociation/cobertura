@@ -1,49 +1,51 @@
-# Prevent brp-java-repack-jars from being run
-%global __jar_repack %{nil}
-
+%{?_javapackages_macros:%_javapackages_macros}
 Name:           cobertura
-Version:        1.9.3
-Release:        5
+Version:        1.9.4.1
+Release:        9.0%{?dist}
 Summary:        Java tool that calculates the percentage of code accessed by tests
 
-Group:          Development/Java
-License:        ASL 1.1 and GPLv2+
+# ASL 2.0: src/net/sourceforge/cobertura/webapp/web.xml
+# GPL+: src/net/sourceforge/cobertura/reporting/html/files/sortabletable.js
+#       src/net/sourceforge/cobertura/reporting/html/files/stringbuilder.js
+# MPL 1.1, GPLv2+, LGPLv2+: some files in src/net/sourceforge/cobertura/javancss/ccl/
+# rest is mix of GPLv2+ and ASL 1.1
+License:        ASL 1.1 and GPLv2+ and MPL and ASL 2.0 and GPL+
 URL:            http://cobertura.sourceforge.net/
 
-Source0:        http://prdownloads.sourceforge.net/cobertura/cobertura-1.9.3-src.tar.gz
-Source1:        %{name}-%{version}.pom
-Source2:        %{name}-runtime-%{version}.pom
+# ./create-tarball.sh %%{version}
+Source0:        %{name}-%{version}-clean.tar.gz
+# POMs based from those available from the Maven repository
+Source1:        http://repo1.maven.org/maven2/net/sourceforge/%{name}/%{name}/%{version}/%{name}-%{version}.pom
+Source2:        http://repo1.maven.org/maven2/net/sourceforge/%{name}/%{name}-runtime/%{version}/%{name}-runtime-%{version}.pom
+Source3:        http://www.apache.org/licenses/LICENSE-1.1.txt
+Source4:        http://www.apache.org/licenses/LICENSE-2.0.txt
+Source5:        create-tarball.sh
+
+Patch0:         %{name}-unmappable-characters.patch
 
 BuildRequires:  ant
 BuildRequires:  ant-junit
-BuildRequires:  ant-trax
 BuildRequires:  antlr
-BuildRequires:  dos2unix
+BuildRequires:  apache-commons-cli
 BuildRequires:  groovy
-BuildRequires:  jpackage-utils
-BuildRequires:  java-devel >= 0:1.6.0
+BuildRequires:  java-devel
 BuildRequires:  jakarta-oro
 BuildRequires:  jaxen
 BuildRequires:  jdom
 BuildRequires:  junit4
 BuildRequires:  log4j
 BuildRequires:  objectweb-asm
-BuildRequires:  tomcat6-servlet-2.5-api
+BuildRequires:  tomcat-servlet-3.0-api
 BuildRequires:  xalan-j2
 BuildRequires:  xerces-j2
 BuildRequires:  xml-commons-jaxp-1.3-apis
-BuildRequires:  jakarta-commons-cli
 
 Requires:       ant
-Requires:       jpackage-utils
-Requires:       java >= 0:1.6.0
+Requires:       java
 Requires:       jakarta-oro
 Requires:       junit4
 Requires:       log4j
-Requires:       objectweb-asm >= 0:3.0
-
-Requires(post): jpackage-utils
-Requires(postun): jpackage-utils
+Requires:       objectweb-asm
 
 BuildArch:      noarch
 
@@ -54,85 +56,142 @@ Java program are lacking test coverage.
 
 %package        javadoc
 Summary:        Javadoc for %{name}
-Group:          Development/Java
-Requires:       %{name} = %{version}-%{release}
-Requires:       jpackage-utils
 
 %description    javadoc
 This package contains the API documentation for %{name}.
 
 %prep
 %setup -q
-find . -type f -name '*.jar' -delete
+%patch0 -p1
+
+cp %{SOURCE3} LICENSE-ASL-1.1
+cp %{SOURCE4} LICENSE-ASL-2.0
 
 sed -i 's/\r//' ChangeLog COPYING COPYRIGHT README
 
-# fix asm depdency to correct groupId
-sed -i 's/org.objectweb.asm/asm/g' %{SOURCE1} %{SOURCE2}
-
 %build
 pushd lib
-  %__ln_s $(build-classpath jaxen) .
-  %__ln_s $(build-classpath jdom) .
-  %__ln_s $(build-classpath junit4) .
-  %__ln_s $(build-classpath log4j) .
-  %__ln_s $(build-classpath objectweb-asm/asm-all) .
-  %__ln_s $(build-classpath oro) .
-  %__ln_s $(build-classpath xalan-j2) .
-  %__ln_s $(build-classpath tomcat6-servlet-2.5-api) servlet-api.jar
-  %__ln_s $(build-classpath apache-commons-cli) commons-cli.jar
+  ln -s $(build-classpath jaxen) .
+  ln -s $(build-classpath jdom) .
+  ln -s $(build-classpath junit4) .
+  ln -s $(build-classpath log4j) .
+  ln -s $(build-classpath objectweb-asm/asm-all) .
+  ln -s $(build-classpath oro) .
+  ln -s $(build-classpath xalan-j2) .
+  ln -s $(build-classpath tomcat-servlet-3.0-api) servlet-api.jar
+  ln -s $(build-classpath apache-commons-cli) commons-cli.jar
   pushd xerces
-    %__ln_s $(build-classpath xalan-j2) .
-    %__ln_s $(build-classpath xml-commons-jaxp-1.3-apis) .
+    ln -s $(build-classpath xalan-j2) .
+    ln -s $(build-classpath xml-commons-jaxp-1.3-apis) .
   popd
 popd
 
 pushd antLibrary/common
-  %__ln_s $(build-classpath groovy) .
+  ln -s $(build-classpath groovy) .
 popd
 
 export CLASSPATH=$(build-classpath objectweb-asm/asm-all commons-cli antlr junit4)
 %ant -Djetty.dir=. -Dlib.dir=. compile test jar javadoc
 
 %install
-# jar
-%__mkdir_p %{buildroot}%{_javadir}
-%__cp -a %{name}.jar %{buildroot}%{_javadir}/%{name}.jar
-
-%add_to_maven_depmap cobertura cobertura %{version} JPP %{name}
-%add_to_maven_depmap cobertura cobertura-runtime %{version} JPP %{name}
-%add_to_maven_depmap net.sourceforge.cobertura cobertura %{version} JPP %{name}
-%add_to_maven_depmap net.sourceforge.cobertura cobertura-runtime %{version} JPP %{name}
+# jars
+install -d -m 755 %{buildroot}%{_javadir}
+install -p -m 644 %{name}.jar %{buildroot}%{_javadir}/%{name}.jar
+(cd %{buildroot}%{_javadir} && ln -s %{name}.jar %{name}-runtime.jar)
 
 # pom
-%__mkdir_p %{buildroot}%{_mavenpomdir}
-%__cp -a %{SOURCE1} %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
-%__cp -a %{SOURCE2} %{buildroot}%{_mavenpomdir}/JPP-%{name}-runtime.pom
+install -d -m 755 %{buildroot}%{_mavenpomdir}
+install -p -m 644 %{SOURCE1} %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
+install -p -m 644 %{SOURCE2} %{buildroot}%{_mavenpomdir}/JPP-%{name}-runtime.pom
 
-%__mkdir_p  %{buildroot}%{_sysconfdir}/ant.d
-%__cat > %{buildroot}%{_sysconfdir}/ant.d/%{name} << EOF
+# depmap
+%add_maven_depmap JPP-%{name}.pom %{name}.jar -a "%{name}:%{name}"
+%add_maven_depmap JPP-%{name}-runtime.pom %{name}-runtime.jar -a "%{name}:%{name}-runtime"
+
+# ant config
+install -d -m 755  %{buildroot}%{_sysconfdir}/ant.d
+cat > %{buildroot}%{_sysconfdir}/ant.d/%{name} << EOF
 ant cobertura junit4 log4j oro xerces-j2
 EOF
 
 # javadoc
-%__mkdir_p %{buildroot}%{_javadocdir}/%{name}
-%__cp -a build/api/* %{buildroot}%{_javadocdir}/%{name}
-
-%post
-%update_maven_depmap
-
-%postun
-%update_maven_depmap
+install -d -m 755 %{buildroot}%{_javadocdir}/%{name}
+cp -rp build/api/* %{buildroot}%{_javadocdir}/%{name}
 
 %files
-%defattr(-,root,root,-)
-%doc ChangeLog COPYING COPYRIGHT README
-%{_javadir}/*.jar
-%config(noreplace) %{_sysconfdir}/ant.d/%{name}
-%{_mavenpomdir}/JPP-%{name}*.pom
-%config(noreplace) %{_mavendepmapfragdir}
+%doc ChangeLog COPYING COPYRIGHT README LICENSE-ASL-1.1 LICENSE-ASL-2.0
+%{_javadir}/%{name}.jar
+%{_javadir}/%{name}-runtime.jar
+%config %{_sysconfdir}/ant.d/%{name}
+%{_mavenpomdir}/JPP-%{name}.pom
+%{_mavenpomdir}/JPP-%{name}-runtime.pom
+%{_mavendepmapfragdir}/*
 
 %files javadoc
-%defattr(-,root,root,-)
-%doc %{_javadocdir}/%{name}
+%doc COPYING COPYRIGHT LICENSE-ASL-1.1 LICENSE-ASL-2.0
+%{_javadocdir}/%{name}
 
+%changelog
+* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.9.4.1-9
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+
+* Fri Aug 02 2013 Michal Srb <msrb@redhat.com> - 1.9.4.1-8
+- Add create-tarball.sh script to SRPM
+
+* Mon Jul 22 2013 Michal Srb <msrb@redhat.com> - 1.9.4.1-7
+- Fix license tag
+- Add ASL 2.0 license text
+- Remove unneeded files licensed under questionable license
+
+* Fri Jul 19 2013 Michal Srb <msrb@redhat.com> - 1.9.4.1-6
+- Provide URL for Source1 and Source2
+
+* Wed Jul 17 2013 Michal Srb <msrb@redhat.com> - 1.9.4.1-5
+- Build from clean tarball
+
+* Wed Jul 03 2013 Michal Srb <msrb@redhat.com> - 1.9.4.1-4
+- Replace servlet 2.5 with servlet 3.0 (Resolves: #979499)
+- Install ASL 1.1 license file
+- Spec file clean up
+
+* Wed Feb 13 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.9.4.1-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
+
+* Tue Nov 27 2012 Tomas Radej <tradej@redhat.com> - 1.9.4.1-2
+- Added MPL to licence field
+
+* Sun Oct 14 2012 Mat Booth <fedora@matbooth.co.uk> - 1.9.4.1-1
+- Update for latest guidelines.
+- Update to latest upstream version, bug 848871.
+- Fix directory ownership, bug 850004.
+
+* Wed Jul 18 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.9.3-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
+* Thu Apr 12 2012 Tomas Radej <tradej@redhat.com> - 1.9.3-5
+- Fixed unmappable characters
+
+* Thu Jan 12 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.9.3-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
+* Tue Feb 08 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.9.3-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
+* Mon Dec 13 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.9.3-2
+- Fix objectweb-asm groupId in pom files
+- Use simple ln -s and build-classpath to symlink jars
+- Versionless jars
+
+* Mon Jun 21 2010 Victor G. Vasilyev <victor.vasilyev@sun.com> 1.9.3-1
+- Release 1.9.3
+
+* Wed Aug 19 2009 Victor G. Vasilyev <victor.vasilyev@sun.com> 1.9-3
+- Fix B(R) according to guidelines
+- Use the  lnSysJAR macro
+- Prevent brp-java-repack-jars from being run
+
+* Sun Aug 09 2009 Victor G. Vasilyev <victor.vasilyev@sun.com> 1.9-2
+- The license tag is changed according to http://cobertura.sourceforge.net/license.html
+
+* Fri Jun 19 2009 Victor G. Vasilyev <victor.vasilyev@sun.com> 1.9-1
+- release 1.9

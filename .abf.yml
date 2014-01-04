@@ -1,4 +1,2 @@
 sources:
-  "cobertura-1.9.3.pom:"	674511ac0b17143564ebb9300a91c278adbb1231
-  "cobertura-1.9.3-src.tar.gz:"	6f2f8150aa0a286c55c89044b5bb640679afd157
-  "cobertura-runtime-1.9.3.pom:"	de27856e4b3c1a7031757c17650978414181812e
+  cobertura-1.9.4.1-clean.tar.gz: e9f1702ae5caf7d415f034ab679408f975d70503
