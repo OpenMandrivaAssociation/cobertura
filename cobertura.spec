@@ -1,7 +1,8 @@
 %{?_javapackages_macros:%_javapackages_macros}
 Name:           cobertura
 Version:        1.9.4.1
-Release:        9.0%{?dist}
+Release:        15.1
+Group:		System/Libraries
 Summary:        Java tool that calculates the percentage of code accessed by tests
 
 # ASL 2.0: src/net/sourceforge/cobertura/webapp/web.xml
@@ -22,6 +23,7 @@ Source4:        http://www.apache.org/licenses/LICENSE-2.0.txt
 Source5:        create-tarball.sh
 
 Patch0:         %{name}-unmappable-characters.patch
+Patch1:         %{name}-fail-build-on-test-failure.patch
 
 BuildRequires:  ant
 BuildRequires:  ant-junit
@@ -32,20 +34,20 @@ BuildRequires:  java-devel
 BuildRequires:  jakarta-oro
 BuildRequires:  jaxen
 BuildRequires:  jdom
-BuildRequires:  junit4
+BuildRequires:  junit
 BuildRequires:  log4j
-BuildRequires:  objectweb-asm
+BuildRequires:  objectweb-asm3
 BuildRequires:  tomcat-servlet-3.0-api
 BuildRequires:  xalan-j2
 BuildRequires:  xerces-j2
 BuildRequires:  xml-commons-jaxp-1.3-apis
 
 Requires:       ant
-Requires:       java
+Requires:       java-headless
 Requires:       jakarta-oro
-Requires:       junit4
+Requires:       junit
 Requires:       log4j
-Requires:       objectweb-asm
+Requires:       objectweb-asm3
 
 BuildArch:      noarch
 
@@ -63,6 +65,7 @@ This package contains the API documentation for %{name}.
 %prep
 %setup -q
 %patch0 -p1
+#patch1 -p1
 
 cp %{SOURCE3} LICENSE-ASL-1.1
 cp %{SOURCE4} LICENSE-ASL-2.0
@@ -73,9 +76,9 @@ sed -i 's/\r//' ChangeLog COPYING COPYRIGHT README
 pushd lib
   ln -s $(build-classpath jaxen) .
   ln -s $(build-classpath jdom) .
-  ln -s $(build-classpath junit4) .
+  ln -s $(build-classpath junit) .
   ln -s $(build-classpath log4j) .
-  ln -s $(build-classpath objectweb-asm/asm-all) .
+  ln -s $(build-classpath objectweb-asm3/asm-all) .
   ln -s $(build-classpath oro) .
   ln -s $(build-classpath xalan-j2) .
   ln -s $(build-classpath tomcat-servlet-3.0-api) servlet-api.jar
@@ -87,10 +90,10 @@ pushd lib
 popd
 
 pushd antLibrary/common
-  ln -s $(build-classpath groovy) .
+ ln -s $(build-classpath groovy) .
 popd
 
-export CLASSPATH=$(build-classpath objectweb-asm/asm-all commons-cli antlr junit4)
+export CLASSPATH=$(build-classpath objectweb-asm3/asm-all commons-cli antlr junit)
 %ant -Djetty.dir=. -Dlib.dir=. compile test jar javadoc
 
 %install
@@ -111,27 +114,40 @@ install -p -m 644 %{SOURCE2} %{buildroot}%{_mavenpomdir}/JPP-%{name}-runtime.pom
 # ant config
 install -d -m 755  %{buildroot}%{_sysconfdir}/ant.d
 cat > %{buildroot}%{_sysconfdir}/ant.d/%{name} << EOF
-ant cobertura junit4 log4j oro xerces-j2
+ant cobertura junit log4j oro xerces-j2
 EOF
 
 # javadoc
 install -d -m 755 %{buildroot}%{_javadocdir}/%{name}
 cp -rp build/api/* %{buildroot}%{_javadocdir}/%{name}
 
-%files
+%files -f .mfiles
 %doc ChangeLog COPYING COPYRIGHT README LICENSE-ASL-1.1 LICENSE-ASL-2.0
-%{_javadir}/%{name}.jar
-%{_javadir}/%{name}-runtime.jar
 %config %{_sysconfdir}/ant.d/%{name}
-%{_mavenpomdir}/JPP-%{name}.pom
-%{_mavenpomdir}/JPP-%{name}-runtime.pom
-%{_mavendepmapfragdir}/*
 
 %files javadoc
 %doc COPYING COPYRIGHT LICENSE-ASL-1.1 LICENSE-ASL-2.0
 %{_javadocdir}/%{name}
 
 %changelog
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.9.4.1-15
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
+* Mon Jun  2 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.9.4.1-14
+- Fail build on test failure
+
+* Wed May 21 2014 Orion Poplawski <orion@cora.nwra.com> - 1.9.4.1-13
+- Use junit instead of junit4
+
+* Wed May 21 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.9.4.1-12
+- Use .mfiles generated during build
+
+* Thu Mar 06 2014 Michal Srb <msrb@redhat.com> - 1.9.4.1-11
+- Switch to asm3
+
+* Tue Mar 04 2014 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.9.4.1-10
+- Use Requires: java-headless rebuild (#1067528)
+
 * Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.9.4.1-9
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
 
@@ -195,3 +211,4 @@ cp -rp build/api/* %{buildroot}%{_javadocdir}/%{name}
 
 * Fri Jun 19 2009 Victor G. Vasilyev <victor.vasilyev@sun.com> 1.9-1
 - release 1.9
+
