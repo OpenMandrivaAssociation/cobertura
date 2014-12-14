@@ -1,0 +1,11 @@
+--- cobertura-1.9.4.1/build.xml~	2010-03-03 20:32:28.000000000 +0100
++++ cobertura-1.9.4.1/build.xml	2014-06-02 16:43:53.456500100 +0200
+@@ -266,6 +266,8 @@
+ 			<report format="frames" todir="${build.reports.dir}/junit-html" />
+ 		</junitreport>
+ 
++		<fail message="There are test failures." if="test.failed" />
++
+ 	</target>
+ 
+ 	<target name="coverage-report">
