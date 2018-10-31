@@ -1,7 +1,7 @@
 %{?_javapackages_macros:%_javapackages_macros}
 Name:           cobertura
 Version:        1.9.4.1
-Release:        15.2
+Release:        15.3
 Group:		System/Libraries
 Summary:        Java tool that calculates the percentage of code accessed by tests
 
