@@ -11,7 +11,7 @@ Summary:        Java tool that calculates the percentage of code accessed by tes
 # MPL 1.1, GPLv2+, LGPLv2+: some files in src/net/sourceforge/cobertura/javancss/ccl/
 # rest is mix of GPLv2+ and ASL 1.1
 License:        ASL 1.1 and GPLv2+ and MPL and ASL 2.0 and GPL+
-URL:            http://cobertura.sourceforge.net/
+URL:            https://cobertura.sourceforge.net/
 
 # ./create-tarball.sh %%{version}
 Source0:        %{name}-%{version}-clean.tar.gz
